@@ -11,8 +11,8 @@
 
 #include "forward.h"
 #include "auxiliary.h"
-#include "helper_math.h"
-#include "math.h"
+#include "helper_math.h"			//
+#include "math.h"			//
 #include <cooperative_groups.h>
 #include <cooperative_groups/reduce.h>
 namespace cg = cooperative_groups;
@@ -273,10 +273,10 @@ renderCUDA(
 	uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ bg_color,
 	float* __restrict__ out_color,
-	const float* __restrict__ depth,
-	float* __restrict__ out_depth, 
-	float* __restrict__ out_opacity,
-	int * __restrict__ n_touched)
+	const float* __restrict__ depth,			//
+	float* __restrict__ out_depth, 			//
+	float* __restrict__ out_opacity,			//
+	int * __restrict__ n_touched)			//
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -302,14 +302,14 @@ renderCUDA(
 	__shared__ int collected_id[BLOCK_SIZE];
 	__shared__ float2 collected_xy[BLOCK_SIZE];
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
-	__shared__ float collected_depth[BLOCK_SIZE];
+	__shared__ float collected_depth[BLOCK_SIZE];			//
 
 	// Initialize helper variables
 	float T = 1.0f;
 	uint32_t contributor = 0;
 	uint32_t last_contributor = 0;
 	float C[CHANNELS] = { 0 };
-	float D = 0.0f;
+	float D = 0.0f;			//
 
 	// Iterate over batches until all done or range is complete
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
@@ -327,7 +327,7 @@ renderCUDA(
 			collected_id[block.thread_rank()] = coll_id;
 			collected_xy[block.thread_rank()] = points_xy_image[coll_id];
 			collected_conic_opacity[block.thread_rank()] = conic_opacity[coll_id];
-			collected_depth[block.thread_rank()] = depth[coll_id];
+			collected_depth[block.thread_rank()] = depth[coll_id];			//
 		}
 		block.sync();
 
@@ -364,11 +364,11 @@ renderCUDA(
 			for (int ch = 0; ch < CHANNELS; ch++) {
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
 			}
-			D += collected_depth[j] * alpha * T;
+			D += collected_depth[j] * alpha * T;			//
 			// Keep track of how many pixels touched this Gaussian.
-			if (test_T > 0.5f) {
-				atomicAdd(&(n_touched[collected_id[j]]), 1);
-			}
+			if (test_T > 0.5f) {			//
+				atomicAdd(&(n_touched[collected_id[j]]), 1);			//
+			}			//
 			T = test_T;
 
 			// Keep track of last range entry to update this
@@ -386,8 +386,8 @@ renderCUDA(
 		for (int ch = 0; ch < CHANNELS; ch++) {
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
 		}
-		out_depth[pix_id] = D;
-		out_opacity[pix_id] = 1 - T;
+		out_depth[pix_id] = D;			//
+		out_opacity[pix_id] = 1 - T;			//
 	}
 }
 
@@ -403,10 +403,10 @@ void FORWARD::render(
 	uint32_t* n_contrib,
 	const float* bg_color,
 	float* out_color,
-	const float* depth,
-	float* out_depth, 
-	float* out_opacity,
-	int* n_touched)
+	const float* depth,			//
+	float* out_depth, 			//
+	float* out_opacity,			//
+	int* n_touched)			//
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
 		ranges,
@@ -419,10 +419,10 @@ void FORWARD::render(
 		n_contrib,
 		bg_color,
 		out_color,
-		depth,
-		out_depth,
-		out_opacity,
-		n_touched);
+		depth,			//
+		out_depth,			//
+		out_opacity,			//
+		n_touched);			//
 }
 
 void FORWARD::preprocess(int P, int D, int M,
